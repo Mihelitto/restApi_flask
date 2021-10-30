@@ -1,5 +1,6 @@
 from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
+from auth_utils import hash_password
 
 Base = declarative_base()
 
@@ -13,7 +14,7 @@ class User(Base):
 
     def __init__(self, name, password):
         self.name = name
-        self.password = password
+        self.password = hash_password(password)
 
     def __repr__(self):
         return f"<User('{self.name}', ID:'{self.id}')>"

@@ -2,7 +2,11 @@ from db import Base, User
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from flask import Flask, jsonify, request
-import base64
+from auth_utils import hash_password, create_token
+
+
+secret_key = "kjldfjsfgpo"
+
 
 app = Flask(__name__)
 
@@ -18,12 +22,14 @@ session = Session()
 
 @app.route('/login', methods=["GET", "POST"])
 def login():
-    
-    payload = request.json
-    if 'name' in payload:
-        print(payload['name'], payload['password'])
-        token = base64.b64encode(bytes(payload['name']))
-        return jsonify({'token': token})
+    if request.method == 'POST':
+        payload = request.json
+        if 'name' in payload:
+            user = session.query(User.name, User.password).filter(User.name==payload['name']).first()
+            if user.password == hash_password(payload['password']):
+                token = create_token(user["name"], secret_key)
+                return jsonify({'token': token})
+        return jsonify({'error': 'wrong password'})
 
 
 @app.route('/users', methods=["GET", "POST"])

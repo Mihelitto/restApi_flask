@@ -1,4 +1,4 @@
-from db import Base, User
+from db import Base, User, Message
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from flask import Flask, jsonify, request, make_response
@@ -32,6 +32,34 @@ def login():
             return make_response(jsonify({'error': 'wrong name or password'}), 401)
         return make_response(jsonify({'error': 'bad request'}), 400)
 
+
+@app.route('/messages', methods=["POST"])
+def messages():
+    payload = request.json
+    if payload and 'name' in payload and 'message' in payload:
+        if 'history' in payload['message']:
+            *_, count = payload['message'].split()
+            if count.isdigit():
+                messages = (session
+                            .query(User.name, Message.message)
+                            .filter(User.id == Message.user)
+                            .order_by(Message.id)
+                            .limit(int(count))
+                            .all()
+                            )
+                result = []
+                for message in messages:
+                    result.append({'neme': message.name, 'message': message.message})
+                return make_response(jsonify(result), 200)
+        else:
+            username = payload['name']
+            user = session.query(User).filter(User.name == username).first()
+            new_message = Message(user_id=user.id, message=payload['message'])
+            session.add(new_message)
+            session.commit()
+            return jsonify({'user': user.name, 'message': 'created'})
+
+    return make_response(jsonify({'error': 'bad request'}), 400)
 
 @app.route('/users', methods=["GET", "POST"])
 def users():

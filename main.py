@@ -1,24 +1,16 @@
 from jwt.exceptions import InvalidTokenError
-from db import Base, User, Message
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from db import Base, engine, session, User, Message
+
 from flask import Flask, jsonify, request, make_response
-from auth_utils import hash_password, create_token, decode_token
+from auth_utils import hash_password, create_token, check_token
 
 
 secret_key = "kjldfjsfgpo"
 
 
 app = Flask(__name__)
-
-engine = create_engine(
-    'sqlite:///db.sqlite3?check_same_thread=False'
-)
-
+Base.metadata.drop_all(engine)
 Base.metadata.create_all(engine)
-
-Session = sessionmaker(bind=engine)
-session = Session()
 
 
 @app.route('/login', methods=["POST"])
@@ -42,26 +34,9 @@ def login():
 def messages():
     payload = request.json
     auth_credentials = request.headers.get('Authorization')
-    if not auth_credentials:
-        return make_response(jsonify({'error': 'Unauthorized'}), 401)
-    scheme, token = auth_credentials.split()
-    if scheme != 'bearer':
-        return make_response(jsonify({'error': 'Unauthorized'}), 401)
     try:
-        decoded_token = decode_token(token, secret_key)
-        user_exists = (
-            session
-            .query(
-                session
-                .query(User)
-                .filter(User.name == decoded_token['name'])
-                .exists()
-            )
-            .scalar()
-        )
-        if not user_exists:
-            raise InvalidTokenError
-    except InvalidTokenError:
+        check_token(auth_credentials, secret_key)
+    except (InvalidTokenError, ValueError):
         return make_response(jsonify({'error': 'Unauthorized'}), 401)
 
     if payload and 'name' in payload and 'message' in payload:
@@ -97,7 +72,10 @@ def users():
     if request.method == 'POST':
         payload = request.json
         if payload and 'name' in payload and 'password' in payload:
-            user = User(name=payload['name'], password=payload['password'])
+            user = User(
+                name=payload['name'],
+                password=hash_password(payload['password'])
+            )
             session.add(user)
             session.commit()
             return jsonify({'user': user.name, 'created': True})

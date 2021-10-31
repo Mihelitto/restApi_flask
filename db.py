@@ -1,8 +1,18 @@
 from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
-from auth_utils import hash_password
+
 
 Base = declarative_base()
+engine = create_engine(
+    'sqlite:///db.sqlite3?check_same_thread=False'
+)
+Base.metadata.drop_all(engine)
+Base.metadata.create_all(engine)
+
+Session = sessionmaker(bind=engine)
+session = Session()
 
 
 class User(Base):
@@ -14,7 +24,7 @@ class User(Base):
 
     def __init__(self, name, password):
         self.name = name
-        self.password = hash_password(password)
+        self.password = password
 
     def __repr__(self):
         return f"<User('{self.name}', ID:'{self.id}')>"

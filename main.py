@@ -25,9 +25,14 @@ session = Session()
 def login():
     payload = request.json
     if payload and 'name' in payload and 'password' in payload:
-        user = session.query(User.name, User.password).filter(User.name==payload['name']).first()
+        user = (
+            session
+            .query(User.name, User.password)
+            .filter(User.name==payload['name'])
+            .first()
+        )
         if user.password == hash_password(payload['password']):
-            token = create_token(user["name"], secret_key)
+            token = create_token(user['name'], secret_key)
             return make_response(jsonify({'token': token}), 200)
         return make_response(jsonify({'error': 'wrong name or password'}), 401)
     return make_response(jsonify({'error': 'bad request'}), 400)
@@ -43,7 +48,19 @@ def messages():
     if scheme != 'bearer':
         return make_response(jsonify({'error': 'Unauthorized'}), 401)
     try:
-        decode_token(token, secret_key)
+        decoded_token = decode_token(token, secret_key)
+        user_exists = (
+            session
+            .query(
+                session
+                .query(User)
+                .filter(User.name == decoded_token['name'])
+                .exists()
+            )
+            .scalar()
+        )
+        if not user_exists:
+            raise InvalidTokenError
     except InvalidTokenError:
         return make_response(jsonify({'error': 'Unauthorized'}), 401)
 
@@ -60,7 +77,9 @@ def messages():
                             )
                 result = []
                 for message in messages:
-                    result.append({'neme': message.name, 'message': message.message})
+                    result.append(
+                        {'name': message.name, 'message': message.message}
+                    )
                 return make_response(jsonify(result), 200)
         else:
             username = payload['name']

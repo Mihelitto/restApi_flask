@@ -37,6 +37,9 @@ def test_login(client):
     bad_request = {'name': 'name'}
     client.post('/users', json=user)
 
+    response = client.get('/login')
+    assert response.status_code == 405
+
     response = client.post('/login', json=user)
     assert response.json == {'token': create_token('name', secret_key)}
     assert response.status_code == 200
@@ -57,6 +60,9 @@ def test_messages(client):
     bad_message = {'name': 'name', 'some other': 'message'}
     headers = {'Authorization': 'bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJuYW1lIjoibmFtZSJ9.Q1CzxnZeZ7Ba9p8GIkRm6fBe5_kQNHK4jCssJKWk1XI'}
     bad_headers = {'Authorization': 'bearer aUzI1NiJ9.eyJuYW1lIjoibmFtZSJ9.Q1CzxnZeZ7Ba9p8GIkRmNHK4jCssJKWk1XI'}
+
+    response = client.get('/messages')
+    assert response.status_code == 405
 
     response = client.post('/messages', json=message, headers=headers)
     assert response.json == {'error': 'Unauthorized'}

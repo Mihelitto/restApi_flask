@@ -13,3 +13,6 @@ def create_token(username: str, secret_key: str) -> str:
         algorithm="HS256"
     )
 
+
+def decode_token(token: str, secret_key: str):
+    return jwt.decode(token, secret_key, algorithms="HS256")

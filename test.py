@@ -1,7 +1,8 @@
 from auth_utils import hash_password, create_token
 import pytest
 from db import Base
-from main import app, engine, secret_key
+from main import app, engine
+from config import secret_key
 
 
 @pytest.fixture
@@ -58,7 +59,7 @@ def test_messages(client):
     message = {'name': 'name', 'message': 'message'}
     history_message = {'name': 'name', 'message': 'history 10'}
     bad_message = {'name': 'name', 'some other': 'message'}
-    headers = {'Authorization': 'bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJuYW1lIjoibmFtZSJ9.Q1CzxnZeZ7Ba9p8GIkRm6fBe5_kQNHK4jCssJKWk1XI'}
+    headers = {'Authorization': f'bearer {create_token("name", secret_key)}'}
     bad_headers = {'Authorization': 'bearer aUzI1NiJ9.eyJuYW1lIjoibmFtZSJ9.Q1CzxnZeZ7Ba9p8GIkRmNHK4jCssJKWk1XI'}
 
     response = client.get('/messages')

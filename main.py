@@ -1,11 +1,8 @@
 from jwt.exceptions import InvalidTokenError
 from db import Base, engine, session, User, Message
-
 from flask import Flask, jsonify, request, make_response
 from auth_utils import hash_password, create_token, check_token
-
-
-secret_key = "kjldfjsfgpo"
+from config import secret_key
 
 
 app = Flask(__name__)

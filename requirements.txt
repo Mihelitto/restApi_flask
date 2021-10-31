@@ -2,3 +2,4 @@ SQLAlchemy==1.4.26
 Flask==2.0.2
 PyJWT==2.3.0
 pytest==6.2.5
+environs==9.3.4
